@@ -1,5 +1,5 @@
 BUCKET  = cv90.leinonen.ninja
-DIST_ID = TBD
+DIST_ID = EA7YGQUKPW1X
 
 .PHONY: start deploy
 
