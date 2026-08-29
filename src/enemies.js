@@ -63,7 +63,7 @@ export const TYPES = {
       if (every(e, 520, (e.seed % 200) + 100) && d > 120) { const [x, y] = tip(e, 4, e.trot + Math.PI / 2); homing(x, y, e.trot, 2.6, 14); audio.rpg(); }
     }
   } },
-  t72: { hull: 't72_hull', turret: 't72_turret', hp: 45, rad: 13, score: 800, air: false, drop: 0.4, wreck: 'wreck_m', update(e) {
+  t72: { hull: 't72_hull', turret: 't72_turret', hp: 45, rad: 13, score: 800, air: false, drop: 0.7, ammo: 0.7, wreck: 'wreck_m', update(e) {
     const los = sense(e);
     const d = dist(e);
     drive(e, e.sx, e.sy, e.seen ? 0.85 : 0.5, 0.02, 200);
@@ -91,7 +91,7 @@ export const TYPES = {
 };
 
 // Static objective structure. Calls for help when attacked.
-TYPES.depot = { hull: 'depot', hp: 120, rad: 17, score: 2000, air: false, drop: 1, wreck: 'wreck_d', static: true, update(e) {
+TYPES.depot = { hull: 'depot', hp: 120, rad: 17, score: 2000, air: false, drop: 1, ammo: 1, wreck: 'wreck_d', static: true, update(e) {
   if (e.flash && e.t % 90 === 0) { const a = Math.random() * 6.28; spawnEnemy('inf', e.x + Math.cos(a) * 60, e.y + Math.sin(a) * 60); }
 } };
 
@@ -111,7 +111,8 @@ export function killEnemy(i) {
     if (e.type === 'inf') { gore(e.x, e.y, e.kvx || 0, e.kvy || 0); audio.hit(); }
     else { explosion(e.x, e.y, d.air ? 1.4 : d.hp > 30 ? 1.8 : d.hp > 10 ? 1.3 : 0.6); audio.explode(d.hp > 30 || d.air); }
     addScore(d.score);
-    if (Math.random() < d.drop) spawnPickup(e.x, e.y, Math.random() < 0.6 ? 'repair' : 'smokep');
+    if (Math.random() < d.drop) spawnPickup(e.x, e.y, d.ammo && Math.random() < d.ammo ? 'ammop' : Math.random() < 0.6 ? 'repair' : 'smokep');
+    if (d.static) { spawnPickup(e.x + 30, e.y, 'ammop'); spawnPickup(e.x - 30, e.y, 'repair'); } // the depot was full of it
     if (d.hp > 10) G.shake = Math.max(G.shake, 6);
     if (d.wreck) {
       const wx = e.x + (d.air ? (Math.random() - 0.5) * 30 : 0), wy = e.y + (d.air ? (Math.random() - 0.5) * 30 : 0);

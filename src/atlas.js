@@ -313,6 +313,7 @@ export function buildAtlas() {
   const glyph = (d, rows, col) => rows.forEach((r, y) => [...r].forEach((ch, x) => { if (ch === '1') d.px(x + 3, y + 3, col); }));
   add('repair', 12, 12, d => { d.rect(0, 0, 12, 12, '#e8e6d8'); d.rect(1, 1, 10, 10, '#c9c7b8'); glyph(d, ['00100', '00100', '11111', '00100', '00100', '00000'], '#d0302a'); });
   add('smokep', 12, 12, d => { d.rect(0, 0, 12, 12, '#8ea9c4'); d.rect(1, 1, 10, 10, '#5a7a94'); glyph(d, ['01110', '10000', '01110', '00001', '11110', '00000'], '#fff'); });
+  add('ammop', 12, 12, d => { d.rect(0, 0, 12, 12, '#f2c94c'); d.rect(1, 1, 10, 10, '#b8860b'); d.rect(5, 2, 2, 7, '#fff'); d.rect(4, 3, 4, 1, '#fff'); d.rect(4, 8, 4, 2, '#fff'); d.px(5, 1, '#fff'); d.px(6, 1, '#fff'); });
   add('life', 12, 12, d => { d.rect(2, 2, 8, 8, '#4b6b33'); d.rect(1, 2, 1, 8, '#2a2c28'); d.rect(10, 2, 1, 8, '#2a2c28'); d.rect(5, 4, 2, 2, '#2e4a22'); d.rect(5, 0, 2, 5, '#6d7a45'); });
 
   return { canvas: c, frames };

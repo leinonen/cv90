@@ -11,7 +11,7 @@ export function spawnBullet(arr, x, y, vx, vy, o = {}) {
   b.frame = o.frame || 'orb'; b.sx = o.sx || 1;
   b.r = o.r ?? 1; b.g = o.g ?? 0.35; b.b = o.b ?? 0.35;
   b.rad = o.rad || 3; b.dmg = o.dmg || 1; b.fn = o.fn || null; b.life = o.life || 600;
-  b.type = o.type || 'mg'; b.air = o.air || false; // air: fired from above, ignores trees
+  b.type = o.type || 'mg'; b.air = o.air || false; b.heavy = o.heavy || false; // air: fired from above, ignores trees
   b.rot = Math.atan2(vy, vx) + Math.PI / 2;
   arr.push(b);
   return b;
@@ -66,16 +66,17 @@ export function explosion(x, y, size = 1) {
 }
 // Cannon shell detonation: blast + splash damage to ground units within `r` (linear falloff).
 export const SPLASH_R = 44, SPLASH_DMG = 10;
-export function detonate(x, y, size = 0.8) {
+export function detonate(x, y, size = 0.8, mult = 1) {
   explosion(x, y, size);
-  G.shake = Math.max(G.shake, 3);
+  G.shake = Math.max(G.shake, 3 * mult);
+  const R = SPLASH_R * (0.7 + 0.3 * mult), D = SPLASH_DMG * mult;
   for (const e of G.enemies) {
     if (e.def.air) continue;
     const d = Math.hypot(e.x - x, e.y - y) - e.rad;
-    if (d < SPLASH_R) { e.hp -= SPLASH_DMG * (1 - Math.max(0, d) / SPLASH_R); e.flash = Math.max(e.flash, 6); e.seen = true; }
+    if (d < R) { e.hp -= D * (1 - Math.max(0, d) / R); e.flash = Math.max(e.flash, 6); e.seen = true; }
   }
   const b = G.boss;
-  if (b && !b.dying) { const d = Math.hypot(b.x - x, b.y - y) - b.rad; if (d < SPLASH_R) { b.hp -= SPLASH_DMG * 0.5 * (1 - Math.max(0, d) / SPLASH_R); b.flash = Math.max(b.flash, 4); } }
+  if (b && !b.dying) { const d = Math.hypot(b.x - x, b.y - y) - b.rad; if (d < R) { b.hp -= D * 0.5 * (1 - Math.max(0, d) / R); b.flash = Math.max(b.flash, 4); } }
 }
 export function muzzle(x, y, ang, size = 1) {
   spawnParticle(x, y, 0, 0, 5, 'flash', 1.2 * size, 1, 0.9, 0.6, true, { rot: ang, grow: 0.3 });
@@ -149,6 +150,7 @@ export function updatePickups() {
       const dx = p.x - k.x, dy = p.y - k.y;
       if (dx * dx + dy * dy < 18 * 18) {
         if (k.type === 'repair') { if (p.hp < p.maxhp) p.hp = Math.min(p.maxhp, p.hp + 60); else addScore(1000); }
+        else if (k.type === 'ammop') { if (p.ammo < 20) p.ammo = Math.min(20, p.ammo + 5); else addScore(1000); }
         else { if (p.smoke < 8) p.smoke += 2; else addScore(1000); }
         addScore(200);
         audio.pickup();
@@ -161,7 +163,7 @@ export function updatePickups() {
 
 // ---------------- player ----------------
 export function newPlayer() {
-  return { x: 0, y: 0, rot: -Math.PI / 2, trot: -Math.PI / 2, v: 0, hp: 150, maxhp: 150, lives: 3, smoke: 4, smokeT: 0,
+  return { x: 0, y: 0, rot: -Math.PI / 2, trot: -Math.PI / 2, v: 0, hp: 150, maxhp: 150, lives: 3, smoke: 4, smokeT: 0, ammo: 0,
            cannonT: 0, mgHeat: 0, mgT: 0, jam: 0, rad: 11, inv: 0, dead: 0, treads: 0, scale: 1, intro: 0 };
 }
 export const SHOW = { x: 0, y: -20, scale: 2.4 };
@@ -178,8 +180,12 @@ function fireCannon(p) {
     const wx = input.mx + G.cam.x - W / 2, wy = input.my + G.cam.y - H / 2;
     life = Math.max(3, Math.min(90, Math.round((Math.hypot(wx - bx, wy - by)) / v)));
   }
-  spawnBullet(G.pb, bx, by, Math.cos(p.trot) * v, Math.sin(p.trot) * v, { frame: 'ap', r: 1, g: 0.95, b: 0.7, rad: 3, dmg: 15, type: 'ap', life, fn: b => { if (b.t === b.life) detonate(b.x, b.y, 0.7); } });
-  muzzle(bx, by, p.trot, 1.4);
+  const heavy = p.ammo > 0; // APFSDS: sabot round, ~3x the punch and a bigger blast
+  if (heavy) p.ammo--;
+  spawnBullet(G.pb, bx, by, Math.cos(p.trot) * v, Math.sin(p.trot) * v, heavy
+    ? { frame: 'ap', r: 0.7, g: 0.9, b: 1, sx: 1.5, rad: 4, dmg: 40, type: 'ap', heavy: true, life, fn: b => { if (b.t === b.life) detonate(b.x, b.y, 1.1, 2); } }
+    : { frame: 'ap', r: 1, g: 0.95, b: 0.7, rad: 3, dmg: 15, type: 'ap', life, fn: b => { if (b.t === b.life) detonate(b.x, b.y, 0.7); } });
+  muzzle(bx, by, p.trot, heavy ? 1.9 : 1.4);
   p.v -= Math.cos(p.trot - p.rot) * 0.7;
   G.shake = Math.max(G.shake, 5); p.cannonT = 38;
   audio.cannon();

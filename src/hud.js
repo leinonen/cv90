@@ -1,6 +1,6 @@
 import { G } from './state.js';
 const $ = id => document.getElementById(id);
-const el = { obj: $('obj'), score: $('score'), hi: $('hi'), lives: $('lives'), smoke: $('smoke'), stage: $('stage_n'), msg: $('msg'), sub: $('sub'), ctl: $('ctl') };
+const el = { obj: $('obj'), score: $('score'), hi: $('hi'), lives: $('lives'), smoke: $('smoke'), ammo: $('ammo'), stage: $('stage_n'), msg: $('msg'), sub: $('sub'), ctl: $('ctl') };
 const bossbar = $('bossbar'), bossfill = $('bossfill'), hpfill = $('hpfill'), heatfill = $('heatfill');
 const last = {};
 function set(k, v) { if (last[k] !== v) { last[k] = v; el[k].textContent = v; } }
@@ -14,6 +14,7 @@ export function updateHUD() {
   set('stage', G.stage);
   set('lives', p ? 'TANK ' + Math.max(0, p.lives) : '');
   set('smoke', p ? 'SMK ' + p.smoke : '');
+  set('ammo', p ? 'AP ' + p.ammo : '');
   set('obj', G.state === 'play' ? G.obj : '');
   set('msg', G.msg); set('sub', G.sub); set('ctl', G.ctl);
   width('hp', hpfill, p ? Math.max(0, p.hp / p.maxhp * 100).toFixed(0) + '%' : '0%');

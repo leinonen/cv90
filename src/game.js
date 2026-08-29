@@ -11,7 +11,7 @@ function hitTree(b, canDamage) {
     const r = (t.rad + b.rad + 1) ** 2;
     const d0 = (t.x - b.x) ** 2 + (t.y - b.y) ** 2, mx = b.x - b.vx * 0.5, my = b.y - b.vy * 0.5;
     if (d0 < r || (t.x - mx) ** 2 + (t.y - my) ** 2 < r) {
-      if (canDamage) { t.hp -= b.type === 'ap' ? 3 : 1; leafBurst(b.x, b.y); if (t.hp <= 0) { removeTree(t); spawnParticle(t.x, t.y, 0, 0, 6000, 'stump', 1, 1, 1, 1, false, { ground: true }); if (b.type === 'ap') detonate(b.x, b.y, 0.6); else explosion(t.x, t.y, 0.5); leafBurst(t.x, t.y); addScore(5); } }
+      if (canDamage) { t.hp -= b.type === 'ap' ? 3 : 1; leafBurst(b.x, b.y); if (t.hp <= 0) { removeTree(t); spawnParticle(t.x, t.y, 0, 0, 6000, 'stump', 1, 1, 1, 1, false, { ground: true }); if (b.type === 'ap') detonate(b.x, b.y, b.heavy ? 1 : 0.6, b.heavy ? 2 : 1); else explosion(t.x, t.y, 0.5); leafBurst(t.x, t.y); addScore(5); } }
       else spawnParticle(b.x, b.y, 0, 0, 8, 'spark', 1, 0.6, 0.8, 0.4, true);
       return true;
     }
@@ -30,7 +30,7 @@ export function collisions() {
       const dx = e.x - k.x, dy = e.y - k.y;
       if (dx * dx + dy * dy < (e.rad + k.rad) ** 2) {
         e.hp -= k.dmg; e.flash = ap ? 8 : 3; hit = true; e.kvx = k.vx; e.kvy = k.vy;
-        if (ap) detonate(k.x, k.y, 0.8);
+        if (ap) detonate(k.x, k.y, k.heavy ? 1.2 : 0.8, k.heavy ? 2 : 1);
         else spawnParticle(k.x, k.y, -k.vx * 0.1, -k.vy * 0.1, 8, 'spark', 1.2, 1, 0.9, 0.6, true);
         audio.hit();
         if (!e.def.air && e.hp > 0 && e.def.hp > 10) e.seen = true; // getting shot reveals you
@@ -40,7 +40,7 @@ export function collisions() {
       const dx = b.x - k.x, dy = b.y - k.y;
       if (dx * dx + dy * dy < (b.rad + k.rad) ** 2) {
         b.hp -= ap ? k.dmg : k.dmg * 0.25; b.flash = 6; hit = true;
-        if (ap) { detonate(k.x, k.y, 0.9); audio.bossHit(); } else spawnParticle(k.x, k.y, -k.vx * 0.2, -k.vy * 0.2, 8, 'spark', 1.2, 1, 0.9, 0.6, true);
+        if (ap) { detonate(k.x, k.y, k.heavy ? 1.4 : 0.9, k.heavy ? 2 : 1); audio.bossHit(); } else spawnParticle(k.x, k.y, -k.vx * 0.2, -k.vy * 0.2, 8, 'spark', 1.2, 1, 0.9, 0.6, true);
         if (b.hp <= 0) { b.dying = 1; addScore(20000 * G.stage); G.flash = 0.5; }
       }
     }

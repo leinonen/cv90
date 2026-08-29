@@ -40,7 +40,7 @@ function pickPoint(dist) {
 const OBJ = {
   move: {
     start(m) { Object.assign(m, pickPoint(rnd(700, 900))); m.text = 'REACH THE FIRE-BASE'; m.marker = 'flag'; },
-    update(m) { if (objDist() < 70) { cache(m.x, m.y, 2, 1); done(m); } }, // fire-base has supplies
+    update(m) { if (objDist() < 70) { cache(m.x, m.y, 2, 1, 1); done(m); } }, // fire-base has supplies
   },
   destroy: {
     start(m) {
@@ -76,6 +76,7 @@ const OBJ = {
       m.text = 'DESTROY THE T-90'; m.marker = 'target';
       const p = P(), a = p.rot + rnd(-0.6, 0.6);
       spawnBoss(p.x + Math.cos(a) * 400, p.y + Math.sin(a) * 400);
+      cache(p.x - Math.cos(a) * 50, p.y - Math.sin(a) * 50, 1, 1, 2); // AP resupply for the T-90
       G.sub = 'WARNING\nHEAVY ARMOUR'; audio.alert();
       after(150, () => { if (G.sub.startsWith('WARNING')) G.sub = ''; });
     },
@@ -85,8 +86,9 @@ const OBJ = {
 const SEQ = ['move', 'destroy', 'hold', 'boss'];
 
 // Drop supplies around a point: n repair crates, s smoke crates.
-function cache(x, y, n, s) {
-  for (let i = 0; i < n + s; i++) { const a = i / (n + s) * 6.28 + 0.5; spawnPickup(x + Math.cos(a) * 34, y + Math.sin(a) * 34, i < n ? 'repair' : 'smokep'); }
+function cache(x, y, n, s, am = 0) {
+  const k = n + s + am;
+  for (let i = 0; i < k; i++) { const a = i / k * 6.28 + 0.5; spawnPickup(x + Math.cos(a) * 34, y + Math.sin(a) * 34, i < n ? 'repair' : i < n + s ? 'smokep' : 'ammop'); }
 }
 function done(m) {
   m.done = true;
@@ -117,7 +119,7 @@ function stageCleared() {
   if (location.search.includes('debug')) console.log(`sector ${G.stage} secured time ${G.time}`);
   addScore(30000 * G.stage);
   G.clearT = 240; G.mission = null; G.obj = '';
-  const p = G.player; if (p) { p.hp = p.maxhp; p.smoke = Math.max(p.smoke, 4); cache(p.x, p.y, 2, 1); }
+  const p = G.player; if (p) { p.hp = p.maxhp; p.smoke = Math.max(p.smoke, 4); cache(p.x, p.y, 2, 1, 1); }
   G.msg = 'SECTOR SECURED';
   G.sub = 'BONUS ' + (30000 * G.stage) + '\nREPAIRED AND RESUPPLIED';
   audio.clear();
