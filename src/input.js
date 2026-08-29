@@ -7,6 +7,7 @@ const map = {
 const NAMES = ['up', 'down', 'left', 'right', 'tl', 'tr', 'fire', 'mg', 'smoke', 'start', 'pause'];
 const keys = {}, cur = {}, prev = {}, mb = {};
 export const input = {
+  onGesture: null, // set by main: unlock audio inside the user-gesture handler
   up: 0, down: 0, left: 0, right: 0, tl: 0, tr: 0, fire: 0, mg: 0, smoke: 0, start: 0, pause: 0,
   drive: 0, steer: 0, turret: 0,
   mx: 0, my: 0, mouse: false, // logical canvas coords; mouse=true once the mouse has been used
@@ -38,13 +39,14 @@ export const input = {
 window.addEventListener('keydown', e => {
   const k = map[e.code];
   input.anyKey = true;
+  if (input.onGesture) input.onGesture();
   if (k) { keys[k] = true; e.preventDefault(); }
 });
 window.addEventListener('keyup', e => { const k = map[e.code]; if (k) keys[k] = false; });
 window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; for (const k in mb) mb[k] = false; });
 const canvas = document.getElementById('c');
 canvas.addEventListener('contextmenu', e => e.preventDefault());
-canvas.addEventListener('mousedown', e => { mb[e.button] = true; input.mouse = true; input.anyKey = true; e.preventDefault(); });
+canvas.addEventListener('mousedown', e => { mb[e.button] = true; input.mouse = true; input.anyKey = true; if (input.onGesture) input.onGesture(); e.preventDefault(); });
 window.addEventListener('mouseup', e => { mb[e.button] = false; });
 window.addEventListener('mousemove', e => {
   const r = canvas.getBoundingClientRect();

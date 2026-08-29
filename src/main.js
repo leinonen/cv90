@@ -20,6 +20,7 @@ const AUTO = location.search.includes('auto'); // headless smoke test: autoplay
 const GOD = location.search.includes('god');
 const dbg = document.getElementById('dbg');
 if (DEBUG) dbg.style.display = 'block';
+input.onGesture = () => audio.init();
 
 function resize() {
   let s = Math.min(innerWidth / W, innerHeight / H);

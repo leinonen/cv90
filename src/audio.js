@@ -22,7 +22,7 @@ function noise(dur, vol, cutoff, cutoffTo) {
 
 export const audio = {
   init() {
-    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; }
+    if (ctx) { if (ctx.state !== 'running') ctx.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     ctx = new AC();
@@ -35,6 +35,7 @@ export const audio = {
     engineG = ctx.createGain(); engineG.gain.value = 0;
     engine.connect(f); f.connect(engineG); engineG.connect(master); engine.start();
     startMusic();
+    if (ctx.state !== 'running') ctx.resume();
   },
   // 0..1 threat level; the score follows it.
   music(intensity) { if (music) music.target = Math.max(0, Math.min(1, intensity)); },
@@ -67,9 +68,9 @@ export const audio = {
 // Drone + slow minor pads + a pulse. Tempo, layers and dissonance scale with `music.target`.
 const ROOTS = [36.71, 29.14, 43.65, 27.50]; // D1, Bb0, F1, A0 — a slow Dm / Bb / F / A cycle
 function startMusic() {
-  const bus = ctx.createGain(); bus.gain.value = 0.55; bus.connect(master);
+  const bus = ctx.createGain(); bus.gain.value = 1.0; bus.connect(master);
   // drone: two detuned saws through a slow-wobbling lowpass
-  const dg = ctx.createGain(); dg.gain.value = 0.05;
+  const dg = ctx.createGain(); dg.gain.value = 0.2;
   const df = ctx.createBiquadFilter(); df.type = 'lowpass'; df.frequency.value = 160; df.Q.value = 4;
   const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07; const lg = ctx.createGain(); lg.gain.value = 60;
   lfo.connect(lg); lg.connect(df.frequency); lfo.start();
@@ -103,8 +104,8 @@ function tick() {
   const L = m.level;
   // continuous layers follow the level
   m.df.frequency.setTargetAtTime(140 + L * 260, now, 0.5);
-  m.dg.gain.setTargetAtTime(0.045 + L * 0.03, now, 0.5);
-  m.tg.gain.setTargetAtTime(Math.max(0, L - 0.45) * 0.05, now, 1.0);
+  m.dg.gain.setTargetAtTime(0.18 + L * 0.12, now, 0.5);
+  m.tg.gain.setTargetAtTime(Math.max(0, L - 0.45) * 0.12, now, 1.0);
   while (m.next < now + 0.25) {
     const t = m.next, interval = 1.25 - L * 0.78; // 48 → 128 bpm
     const b = m.beat;
@@ -112,13 +113,13 @@ function tick() {
       m.chord = (m.chord + 1) % ROOTS.length;
       const r = ROOTS[m.chord] * 2;
       const freqs = [r, r * 1.5, r * 2.4 * (m.chord === 3 ? 1.05 : 1)]; // A chord gets a major third: unresolved
-      m.pad.forEach((v, i) => { v.o.frequency.setTargetAtTime(freqs[i], t, 0.8); v.g.gain.setTargetAtTime(0.028 - i * 0.006 + L * 0.012, t, 1.5); });
+      m.pad.forEach((v, i) => { v.o.frequency.setTargetAtTime(freqs[i], t, 0.8); v.g.gain.setTargetAtTime(0.09 - i * 0.02 + L * 0.04, t, 1.5); });
     }
-    kick(t, 0.28 + L * 0.2);                                   // heartbeat on every beat
-    if (L > 0.3 && b % 2 === 1) kick(t + interval * 0.5, 0.16 * L, 70, 40, 0.2); // syncopated second thump
-    if (L > 0.45) tickNoise(t + interval * 0.5, 0.06 + L * 0.08, 3000); // off-beat tick
-    if (L > 0.7 && b % 4 === 2) kick(t, 0.3, 160, 60, 0.3);   // tom accent
-    if (L > 0.85 && b % 8 === 7) tickNoise(t + interval * 0.75, 0.2, 1200); // pre-bar snap
+    kick(t, 0.5 + L * 0.3);                                   // heartbeat on every beat
+    if (L > 0.3 && b % 2 === 1) kick(t + interval * 0.5, 0.3 * L, 70, 40, 0.2); // syncopated second thump
+    if (L > 0.45) tickNoise(t + interval * 0.5, 0.12 + L * 0.15, 3000); // off-beat tick
+    if (L > 0.7 && b % 4 === 2) kick(t, 0.5, 160, 60, 0.3);   // tom accent
+    if (L > 0.85 && b % 8 === 7) tickNoise(t + interval * 0.75, 0.35, 1200); // pre-bar snap
     m.next += interval; m.beat++;
   }
 }
