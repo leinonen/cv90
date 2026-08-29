@@ -64,62 +64,77 @@ export const audio = {
   clear() { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => tone(f, 'square', 0.25, 0.1), i * 120)); },
 };
 
-// ---------------- procedural score ----------------
-// Drone + slow minor pads + a pulse. Tempo, layers and dissonance scale with `music.target`.
-const ROOTS = [36.71, 29.14, 43.65, 27.50]; // D1, Bb0, F1, A0 — a slow Dm / Bb / F / A cycle
+// ---------------- procedural score: dark chiptune ----------------
+// 16th-note step sequencer. Layers gate in with `music.target` (0..1):
+//   always: bass + kick      >0.3: snare/hats     >0.55: arp lead      >0.8: octave lead + double-time hats
+const N = f => 440 * Math.pow(2, (f - 69) / 12); // midi → Hz
+const CHORDS = [ // [root midi, third offset] — Dm, Bb, F, A (major third: never resolves)
+  [38, 3], [34, 4], [41, 4], [33, 4],
+];
+// bass patterns (semitone offsets from root, null = rest), 16 steps
+const BASS = [
+  [0, null, 0, 0, null, 0, null, 12, 0, null, 0, 0, null, 10, null, 12],
+  [0, 0, null, 0, 7, null, 0, null, 0, 0, null, 0, 12, null, 10, 7],
+];
+const KICK = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0];
+const SNARE = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1];
+const ARP = [0, 7, 12, 7, 15, 12, 19, 12, 0, 7, 12, 7, 15, 12, 24, 19]; // third slot replaced by chord third
 function startMusic() {
-  const bus = ctx.createGain(); bus.gain.value = 1.0; bus.connect(master);
-  // drone: two detuned saws through a slow-wobbling lowpass
-  const dg = ctx.createGain(); dg.gain.value = 0.2;
-  const df = ctx.createBiquadFilter(); df.type = 'lowpass'; df.frequency.value = 160; df.Q.value = 4;
-  const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07; const lg = ctx.createGain(); lg.gain.value = 60;
-  lfo.connect(lg); lg.connect(df.frequency); lfo.start();
-  for (const det of [0, 1.004]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 36.71 * det; o.connect(df); o.start(); }
-  df.connect(dg); dg.connect(bus);
-  // pad voices (3) with slow attack/release
+  const bus = ctx.createGain(); bus.gain.value = 0.9; bus.connect(master);
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 2; lp.connect(bus);
+  // pad: 3 detuned pulse voices through the shared lowpass
   const pad = [];
-  for (let i = 0; i < 3; i++) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = i ? 'triangle' : 'sine'; g.gain.value = 0; o.connect(g); g.connect(bus); o.start(); pad.push({ o, g }); }
-  // tension voice: high, slowly beating pair that fades in with intensity
-  const tg = ctx.createGain(); tg.gain.value = 0;
-  for (const f of [587.33, 590.5]) { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.connect(tg); o.start(); }
-  tg.connect(bus);
-  music = { target: 0.15, level: 0.15, next: ctx.currentTime + 0.5, beat: 0, chord: 0, bus, dg, df, pad, tg };
-  setInterval(tick, 80);
+  for (let i = 0; i < 3; i++) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = i === 1 ? 'sawtooth' : 'square'; g.gain.value = 0; o.connect(g); g.connect(lp); o.start(); pad.push({ o, g }); }
+  music = { target: 0.15, level: 0.15, next: ctx.currentTime + 0.3, step: 0, bus, lp, pad };
+  setInterval(tick, 60);
 }
-function kick(t, vol, f0 = 90, f1 = 32, dur = 0.35) {
+function voice(t, freq, type, dur, vol, dest, slideTo) {
   const o = ctx.createOscillator(), g = ctx.createGain();
-  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.6);
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(g); g.connect(music.bus); o.start(t); o.stop(t + dur + 0.02);
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.005); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.02);
 }
-function tickNoise(t, vol, cutoff) {
+function drum(t, kind, vol) {
+  if (kind === 'kick') { voice(t, 120, 'sine', 0.22, vol, music.bus, 35); return; }
   const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
-  s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = cutoff; f.Q.value = 6;
-  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-  s.connect(f); f.connect(g); g.connect(music.bus); s.start(t); s.stop(t + 0.08);
+  s.buffer = noiseBuf; f.type = kind === 'hat' ? 'highpass' : 'bandpass'; f.frequency.value = kind === 'hat' ? 7000 : 1800; f.Q.value = 1;
+  const dur = kind === 'hat' ? 0.04 : 0.12;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  s.connect(f); f.connect(g); g.connect(music.bus); s.start(t); s.stop(t + dur + 0.02);
+  if (kind === 'snare') voice(t, 220, 'triangle', 0.08, vol * 0.5, music.bus, 120);
 }
 function tick() {
   const m = music, now = ctx.currentTime;
-  m.level += (m.target - m.level) * 0.04;
+  m.level += (m.target - m.level) * 0.03;
   const L = m.level;
-  // continuous layers follow the level
-  m.df.frequency.setTargetAtTime(140 + L * 260, now, 0.5);
-  m.dg.gain.setTargetAtTime(0.18 + L * 0.12, now, 0.5);
-  m.tg.gain.setTargetAtTime(Math.max(0, L - 0.45) * 0.12, now, 1.0);
-  while (m.next < now + 0.25) {
-    const t = m.next, interval = 1.25 - L * 0.78; // 48 → 128 bpm
-    const b = m.beat;
-    if (b % 8 === 0) { // chord change: pad slides to new root voicing (root, fifth, minor third an octave up)
-      m.chord = (m.chord + 1) % ROOTS.length;
-      const r = ROOTS[m.chord] * 2;
-      const freqs = [r, r * 1.5, r * 2.4 * (m.chord === 3 ? 1.05 : 1)]; // A chord gets a major third: unresolved
-      m.pad.forEach((v, i) => { v.o.frequency.setTargetAtTime(freqs[i], t, 0.8); v.g.gain.setTargetAtTime(0.09 - i * 0.02 + L * 0.04, t, 1.5); });
+  m.lp.frequency.setTargetAtTime(500 + L * 2200, now, 0.4);
+  while (m.next < now + 0.2) {
+    const t = m.next, bpm = 96 + L * 54, sixteenth = 60 / bpm / 4;
+    const st = m.step, bar = Math.floor(st / 16), s16 = st % 16;
+    const [root, third] = CHORDS[bar % 4];
+    if (s16 === 0) { // pad chord change on the bar
+      const fr = [N(root + 12), N(root + 12 + third), N(root + 19)];
+      m.pad.forEach((v, i) => { v.o.frequency.setTargetAtTime(fr[i] * (i === 1 ? 1.003 : 1), t, 0.05); v.g.gain.setTargetAtTime(0.05 + L * 0.03, t, 0.3); });
     }
-    kick(t, 0.5 + L * 0.3);                                   // heartbeat on every beat
-    if (L > 0.3 && b % 2 === 1) kick(t + interval * 0.5, 0.3 * L, 70, 40, 0.2); // syncopated second thump
-    if (L > 0.45) tickNoise(t + interval * 0.5, 0.12 + L * 0.15, 3000); // off-beat tick
-    if (L > 0.7 && b % 4 === 2) kick(t, 0.5, 160, 60, 0.3);   // tom accent
-    if (L > 0.85 && b % 8 === 7) tickNoise(t + interval * 0.75, 0.35, 1200); // pre-bar snap
-    m.next += interval; m.beat++;
+    // bass: pulse + sub
+    const b = BASS[Math.floor(bar / 2) % 2][s16];
+    if (b !== null) { const f = N(root + b); voice(t, f, 'square', sixteenth * 0.9, 0.16, m.lp); voice(t, f / 2, 'triangle', sixteenth * 0.95, 0.22, m.bus); }
+    // drums
+    if (KICK[s16]) drum(t, 'kick', 0.7);
+    if (L > 0.3) {
+      if (SNARE[s16]) drum(t, 'snare', 0.25 + L * 0.2);
+      if (s16 % 2 === 0 || L > 0.8) drum(t, 'hat', s16 % 4 === 2 ? 0.12 : 0.06);
+    }
+    // arp lead
+    if (L > 0.55) {
+      const a = ARP[s16] === 15 ? third + 12 : ARP[s16];
+      const f = N(root + 24 + a), v = 0.06 + (L - 0.55) * 0.12;
+      voice(t, f, 'square', sixteenth * 0.6, v, m.lp);
+      if (L > 0.8) voice(t, f * 2.005, 'square', sixteenth * 0.5, v * 0.5, m.lp);
+    }
+    // bar-end fill at high threat
+    if (L > 0.7 && s16 >= 12 && bar % 4 === 3) drum(t, 'snare', 0.2 + (s16 - 12) * 0.08);
+    m.next += sixteenth; m.step++;
   }
 }
