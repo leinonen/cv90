@@ -1,5 +1,5 @@
 import { G, addScore, hpMul, rate, after } from './state.js';
-import { spawnBullet, spawnParticle, spawnPickup, spawnSmoke, explosion, crashFire, muzzle, inSmoke } from './entities.js';
+import { spawnBullet, spawnParticle, spawnPickup, spawnSmoke, explosion, crashFire, muzzle, inSmoke, gore } from './entities.js';
 import { collideTrees } from './terrain.js';
 import * as P from './patterns.js';
 import { audio } from './audio.js';
@@ -103,8 +103,8 @@ export function spawnEnemy(type, x, y, o = {}) {
 export function killEnemy(i) {
   const e = G.enemies[i], d = e.def;
   if (!e.silent) {
-    explosion(e.x, e.y, d.air ? 1.4 : d.hp > 30 ? 1.8 : d.hp > 10 ? 1.3 : 0.6);
-    audio.explode(d.hp > 30 || d.air);
+    if (e.type === 'inf') { gore(e.x, e.y, e.kvx || 0, e.kvy || 0); audio.hit(); }
+    else { explosion(e.x, e.y, d.air ? 1.4 : d.hp > 30 ? 1.8 : d.hp > 10 ? 1.3 : 0.6); audio.explode(d.hp > 30 || d.air); }
     addScore(d.score);
     if (Math.random() < d.drop) spawnPickup(e.x, e.y, Math.random() < 0.6 ? 'repair' : 'smokep');
     if (d.hp > 10) G.shake = Math.max(G.shake, 6);
@@ -112,8 +112,6 @@ export function killEnemy(i) {
       const wx = e.x + (d.air ? (Math.random() - 0.5) * 30 : 0), wy = e.y + (d.air ? (Math.random() - 0.5) * 30 : 0);
       spawnParticle(wx, wy, 0, 0, 3000, d.wreck, 1, 1, 1, 1, false, { rot: e.rot + Math.PI / 2, ground: true, fade: 1 });
       crashFire(wx, wy, d.hp > 30 ? 500 : 240, d.hp > 30 ? 1.3 : 0.9);
-    } else {
-      for (let j = 0; j < 5; j++) spawnParticle(e.x, e.y, (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, 30, 'spark', 1, 0.8, 0.2, 0.15, false, { drag: 0.9, fade: 0.8 });
     }
   }
   G.enemies[i] = G.enemies[G.enemies.length - 1]; G.enemies.pop();

@@ -29,7 +29,7 @@ export function collisions() {
       if (ap && e.def.air) continue; // cannon can't elevate to the Hind
       const dx = e.x - k.x, dy = e.y - k.y;
       if (dx * dx + dy * dy < (e.rad + k.rad) ** 2) {
-        e.hp -= k.dmg; e.flash = ap ? 8 : 3; hit = true;
+        e.hp -= k.dmg; e.flash = ap ? 8 : 3; hit = true; e.kvx = k.vx; e.kvy = k.vy;
         if (ap) detonate(k.x, k.y, 0.8);
         else spawnParticle(k.x, k.y, -k.vx * 0.1, -k.vy * 0.1, 8, 'spark', 1.2, 1, 0.9, 0.6, true);
         audio.hit();
@@ -70,7 +70,7 @@ export function collisions() {
       if (e.def.air) continue;
       const dx = e.x - p.x, dy = e.y - p.y, d2 = dx * dx + dy * dy, r = e.rad + p.rad;
       if (d2 < r * r && d2 > 0.01) {
-        if (e.type === 'inf') { e.hp = 0; continue; }
+        if (e.type === 'inf') { e.hp = 0; e.kvx = Math.cos(p.rot) * p.v; e.kvy = Math.sin(p.rot) * p.v; continue; }
         const d = Math.sqrt(d2), k = (r - d) / d;
         e.x += dx * k * 0.5; e.y += dy * k * 0.5; p.x -= dx * k * 0.5; p.y -= dy * k * 0.5;
         if (Math.abs(p.v) > 1.5) { p.v *= 0.5; hurtPlayer(3, p.x + dx * 0.5, p.y + dy * 0.5); e.hp -= 3; e.flash = 4; }

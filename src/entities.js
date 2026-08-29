@@ -84,6 +84,18 @@ export function muzzle(x, y, ang, size = 1) {
     spawnParticle(x, y, Math.cos(a) * sp, Math.sin(a) * sp, 20 + Math.random() * 15, 'smoke', 0.6 + Math.random() * 0.5 * size, 0.6, 0.6, 0.6, false, { grow: 0.05, drag: 0.94, fade: 0.5 });
   }
 }
+// Infantry death: red spray + splats that stay on the ground.
+export function gore(x, y, vx = 0, vy = 0) {
+  for (let i = 0; i < 14; i++) {
+    const a = Math.random() * Math.PI * 2, sp = 0.5 + Math.random() * 2.5;
+    spawnParticle(x, y, Math.cos(a) * sp + vx * 0.3, Math.sin(a) * sp + vy * 0.3, 12 + Math.random() * 14, 'spark', 0.8 + Math.random() * 0.8, 0.75, 0.05, 0.05, false, { drag: 0.85, fade: 0.95 });
+  }
+  const n = 3 + (Math.random() * 3 | 0);
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * Math.PI * 2, d = i ? 3 + Math.random() * 11 : 0;
+    spawnParticle(x + Math.cos(a) * d + vx * 2, y + Math.sin(a) * d + vy * 2, 0, 0, 2400 + Math.random() * 1200, 'crater', (i ? 0.25 : 0.5) + Math.random() * 0.25, 0.5, 0.03, 0.03, false, { fade: 0.85, ground: true, rot: Math.random() * 6, sy: 0 });
+  }
+}
 export function leafBurst(x, y) {
   for (let i = 0; i < 12; i++) {
     const a = Math.random() * Math.PI * 2, sp = 0.5 + Math.random() * 2;

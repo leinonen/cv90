@@ -1,0 +1,10 @@
+<body style="background:#556b3a;margin:0"><canvas id="o" width="960" height="400"></canvas>
+<script type="module">
+import { buildAtlas } from './src/atlas.js';
+const a = buildAtlas(), g = document.getElementById('o').getContext('2d');
+g.imageSmoothingEnabled = true; let x = 10;
+for (const n of ['cv90_hull','cv90_turret','bmp_hull','bmp_turret','t72_hull','t72_turret','t90_hull','t90_turret','hind','inf']) {
+  const f = a.frames[n], S = 1024, sw = (f.u1-f.u0)*S, sh = (f.v1-f.v0)*S, k = 5;
+  g.drawImage(a.canvas, f.u0*S, f.v0*S, sw, sh, x, 20, f.w*k, f.h*k); x += f.w*k + 14;
+}
+</script></body>

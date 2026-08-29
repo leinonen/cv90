@@ -84,12 +84,16 @@ export function buildAtlas() {
 
   // Generic tracked hull. Sprite w×h; hull faces up. o: {pal, trackW, hull(pts right half), wheels, glacis, hatches, extras(fn)}
   function tracked(d, o) {
-    const w = d.w, h = d.h, cx = w / 2, p = o.pal, tw = o.trackW || 4;
-    // tracks
+    const w = d.w, h = d.h, cx = w / 2, p = o.pal, tw = o.trackW || 4, tt = o.trackTop || 2;
+    const gl = o.glacis || 5, dk = o.deck || 7;
+    // tracks with idler (front) and drive sprocket (rear)
     for (const tx of [1, w - 1 - tw]) {
-      rrect(tx, o.trackTop || 2, tw, h - (o.trackTop || 2) - 1.5, 1.2, p.track, p.edge, 0.5);
-      for (let y = (o.trackTop || 2) + 1.5; y < h - 2.5; y += 2) line(tx + 0.5, y, tx + tw - 0.5, y, 'rgba(0,0,0,0.45)', 0.5);
-      line(tx + tw / 2, (o.trackTop || 2) + 1, tx + tw / 2, h - 2.5, 'rgba(255,255,255,0.12)', 0.6);
+      rrect(tx, tt, tw, h - tt - 1.5, 1.2, p.track, p.edge, 0.5);
+      for (let y = tt + 1.5; y < h - 2.5; y += 2) line(tx + 0.5, y, tx + tw - 0.5, y, 'rgba(0,0,0,0.45)', 0.5);
+      line(tx + tw / 2, tt + 1, tx + tw / 2, h - 2.5, 'rgba(255,255,255,0.12)', 0.6);
+      ellipse(tx + tw / 2, tt + tw / 2 + 0.5, tw * 0.38, tw * 0.38, '#4a4c46', '#111', 0.3);
+      ellipse(tx + tw / 2, h - tw / 2 - 2, tw * 0.42, tw * 0.42, '#3a3c36', '#111', 0.3);
+      ellipse(tx + tw / 2, h - tw / 2 - 2, tw * 0.15, tw * 0.15, '#6a6c66', null);
     }
     // hull body with camo
     g.save();
@@ -97,12 +101,23 @@ export function buildAtlas() {
     g.beginPath(); hull.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.clip();
     g.fillStyle = grad(tw, w - tw, [[0, p.base], [0.5, lighten(p.base, 0.12)], [1, darken(p.base, 0.15)]]); g.fillRect(0, 0, w, h);
     camo(tw, 0, w - 2 * tw, h, p.cam, o.camoN || 10, p.splinter);
-    // glacis highlight (front) and engine deck (rear) lines
-    g.fillStyle = 'rgba(255,255,255,0.14)'; g.fillRect(tw, 0, w - 2 * tw, o.glacis || 5);
-    g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(tw, h - (o.deck || 7), w - 2 * tw, o.deck || 7);
-    for (let y = h - (o.deck || 7) + 1.5; y < h - 1; y += 1.5) line(tw + 1, y, w - tw - 1, y, 'rgba(0,0,0,0.25)', 0.35);
+    // FRONT: sloped glacis catches the light; crease line where it meets the roof
+    const gg = g.createLinearGradient(0, 0, 0, gl + 2);
+    gg.addColorStop(0, 'rgba(255,255,255,0.42)'); gg.addColorStop(1, 'rgba(255,255,255,0.08)');
+    g.fillStyle = gg; g.fillRect(tw, 0, w - 2 * tw, gl + 2);
+    line(tw + 0.5, gl + 2, w - tw - 0.5, gl + 2, 'rgba(0,0,0,0.5)', 0.5);
+    // REAR: engine deck grille + rear door, in shadow
+    g.fillStyle = 'rgba(0,0,0,0.30)'; g.fillRect(tw, h - dk, w - 2 * tw, dk);
+    for (let y = h - dk + 1.2; y < h - 3; y += 1.3) line(tw + 1.2, y, w - tw - 1.2, y, 'rgba(0,0,0,0.45)', 0.5);
+    g.fillStyle = 'rgba(0,0,0,0.35)'; g.fillRect(cx - (w - 2 * tw) * 0.28, h - 3, (w - 2 * tw) * 0.56, 2.2);
+    line(cx - (w - 2 * tw) * 0.28, h - 3, cx - (w - 2 * tw) * 0.28, h - 0.8, 'rgba(255,255,255,0.15)', 0.4);
+    line(cx + (w - 2 * tw) * 0.28, h - 3, cx + (w - 2 * tw) * 0.28, h - 0.8, 'rgba(255,255,255,0.15)', 0.4);
     g.restore();
     poly(hull, null, p.edge, 0.5);
+    // headlights front, exhaust stubs + tow hooks rear (outside clip so they can sit on the edge)
+    for (const sx of [tw + 1.6, w - tw - 1.6]) { ellipse(sx, 1.6, 0.9, 0.7, '#f2f0d0', '#222', 0.3); }
+    for (const sx of [tw + 1.2, w - tw - 1.2]) { rrect(sx - 0.8, h - 2.4, 1.6, 1.6, 0.3, '#2a2a26', '#000', 0.3); }
+    rrect(w - tw - 3.2, h - dk - 1.5, 1.6, 3, 0.4, '#1c1c1a', '#000', 0.3); // exhaust
     if (o.hatches) for (const [hx, hy, hr] of o.hatches) ellipse(hx, hy, hr, hr, darken(p.base, 0.2), p.edge, 0.35);
     if (o.extras) o.extras();
   }
@@ -137,8 +152,8 @@ export function buildAtlas() {
   // ---- CV90 (Strf 9040) ---------------------------------------------------
   add('cv90_hull', 22, 34, d => tracked(d, { pal: SWE, trackW: 4, glacis: 6, deck: 8,
     hull: [[11, 1], [16, 1.5], [17.5, 5], [17.8, 28], [16.5, 33], [11, 33]],
-    hatches: [[6.5, 26, 1.4], [15.5, 26, 1.4]],
-    extras: () => { line(5.5, 10, 16.5, 10, 'rgba(0,0,0,0.35)', 0.4); ellipse(11, 4, 1.2, 0.7, '#9fb8c8', '#111', 0.3); } }), SS);
+    hatches: [[6.8, 9.5, 1.5], [6.5, 25, 1.3], [15.5, 25, 1.3]],
+    extras: () => { ellipse(6.8, 9.5, 0.9, 0.4, '#9fb8c8', null); } }), SS);
   add('cv90_turret', 14, 44, d => turret(d, { pal: SWE, r: 5.5, barrel: [21, 1.6], muzzle: 2.5, mantlet: 4, coax: 3.2, hatchX: -2,
     body: [[0, -5.5], [4.5, -5], [6, -2], [6, 5], [4, 7], [0, 7]],
     extras: (cx, cy) => { rrect(cx + 3.5, cy - 2, 2, 5, 0.5, '#2a3022', '#111', 0.3); line(cx - 5.5, cy + 4, cx + 5.5, cy + 4, 'rgba(0,0,0,0.3)', 0.4); } }), SS);
@@ -146,8 +161,8 @@ export function buildAtlas() {
   // ---- BMP-2 --------------------------------------------------------------
   add('bmp_hull', 20, 30, d => tracked(d, { pal: RUS, trackW: 3.5, glacis: 7, deck: 6,
     hull: [[10, 0.5], [14, 2], [16, 6], [16.3, 26], [15, 29.5], [10, 29.5]],
-    hatches: [[7, 24, 1.2], [13, 24, 1.2]],
-    extras: () => { line(4, 8, 16, 8, 'rgba(0,0,0,0.35)', 0.4); } }), SS);
+    hatches: [[6.5, 10, 1.3], [7, 23, 1.1], [13, 23, 1.1]],
+    extras: () => { ellipse(6.5, 10, 0.8, 0.4, '#9fb8c8', null); } }), SS);
   add('bmp_turret', 10, 34, d => turret(d, { pal: RUS, r: 4, barrel: [14, 1.1], mantlet: 3, coax: 2.2,
     body: [[0, -4], [3.5, -3], [4, 3], [2.5, 4.2], [0, 4.5]],
     extras: (cx, cy) => { rrect(cx - 1.5, cy - 9, 3, 6, 0.5, '#3a3a2a', '#111', 0.3); } }), SS); // ATGM launcher on top
@@ -155,8 +170,8 @@ export function buildAtlas() {
   // ---- T-72 ---------------------------------------------------------------
   add('t72_hull', 26, 34, d => tracked(d, { pal: RUS2, trackW: 5, glacis: 7, deck: 9,
     hull: [[13, 1], [18.5, 2], [20.5, 7], [20.8, 28], [19, 33], [13, 33]],
-    hatches: [],
-    extras: () => { for (let i = 0; i < 4; i++) rrect(6 + i * 4, 30, 3, 2, 0.4, '#2a2a22', '#111', 0.3); } }), SS);
+    hatches: [[13, 9.5, 1.5]],
+    extras: () => { for (let i = 0; i < 4; i++) rrect(7 + i * 3.5, 24.5, 2.6, 1.6, 0.4, '#2a2a22', '#111', 0.3); } }), SS);
   add('t72_turret', 16, 48, d => turret(d, { pal: RUS2, r: 6.5, barrel: [22, 1.8], muzzle: 3, mantlet: 5, coax: 3.5,
     body: [[0, -6.5], [5.5, -4.5], [6.5, 1], [5, 6], [0, 7]],
     extras: (cx, cy) => { ellipse(cx - 3, cy + 1, 1.4, 1.4, '#3c3c2c', '#111', 0.3); rrect(cx - 0.6, cy - 12, 1.2, 4, 0.3, '#222', null); } }), SS);
@@ -164,8 +179,8 @@ export function buildAtlas() {
   // ---- T-90 (boss) ----------------------------------------------------------
   add('t90_hull', 40, 54, d => tracked(d, { pal: T90, trackW: 7, glacis: 10, deck: 14, camoN: 22,
     hull: [[20, 1], [28, 2], [32, 9], [32.5, 46], [30, 53], [20, 53]],
-    hatches: [],
-    extras: () => { for (let i = 0; i < 6; i++) rrect(9 + i * 4, 48, 3, 3, 0.4, '#2a2a22', '#111', 0.3); line(8, 12, 32, 12, 'rgba(0,0,0,0.35)', 0.5); } }), SS);
+    hatches: [[20, 13, 2.2]],
+    extras: () => { for (let i = 0; i < 6; i++) rrect(10 + i * 3.6, 38, 2.8, 2.2, 0.4, '#2a2a22', '#111', 0.3); for (let i = 0; i < 5; i++) rrect(9 + i * 4.8, 4, 3.4, 1.2, 0.3, '#3a3a30', '#111', 0.25); } }), SS);
   add('t90_turret', 26, 76, d => turret(d, { pal: T90, r: 10.5, barrel: [34, 2.6], muzzle: 4, mantlet: 8, coax: 5.5, hatchX: 4,
     body: [[0, -10.5], [8.5, -7.5], [10.5, 1], [8, 9], [0, 11]],
     extras: (cx, cy) => { ellipse(cx - 4.5, cy + 2, 2.2, 2.2, '#3c3c2c', '#111', 0.3); for (const sx of [-8, 8]) for (let i = 0; i < 3; i++) rrect(cx + sx - 1 + (sx < 0 ? -i * 1.4 : i * 1.4), cy - 8 + i * 1.5, 1.6, 3, 0.4, '#3a3a30', '#111', 0.25); rrect(cx - 3.2, cy - 14, 1.2, 5, 0.3, '#222', null); rrect(cx + 5, cy - 6, 1.6, 1.6, 0.3, '#c33', '#511', 0.3); } }), SS);
