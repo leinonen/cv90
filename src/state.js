@@ -12,7 +12,7 @@ export const G = {
   enemies: [], eb: [], pb: [], parts: [], smokes: [], pickups: [], timers: [],
   boss: null,
   levelT: 0, clearT: 0, mission: null, obj: '',
-  msg: '', sub: '', ctl: '',
+  msg: '', sub: '', ctl: '', toast: '', toastT: 0,
 };
 
 export const dif = () => G.stage - 1;

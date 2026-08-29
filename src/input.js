@@ -2,13 +2,13 @@ import { W, H } from './state.js';
 const map = {
   ArrowUp: 'up', KeyW: 'up', ArrowDown: 'down', KeyS: 'down', KeyA: 'left', KeyD: 'right',
   ArrowLeft: 'tl', ArrowRight: 'tr', KeyQ: 'tl', KeyE: 'tr',
-  KeyZ: 'fire', Space: 'fire', KeyJ: 'fire', KeyX: 'mg', KeyK: 'mg', KeyC: 'smoke', KeyL: 'smoke', Enter: 'start', KeyP: 'pause',
+  KeyZ: 'fire', Space: 'fire', KeyJ: 'fire', KeyX: 'mg', KeyK: 'mg', KeyC: 'smoke', KeyL: 'smoke', Enter: 'start', KeyP: 'pause', KeyM: 'mute',
 };
-const NAMES = ['up', 'down', 'left', 'right', 'tl', 'tr', 'fire', 'mg', 'smoke', 'start', 'pause'];
+const NAMES = ['up', 'down', 'left', 'right', 'tl', 'tr', 'fire', 'mg', 'smoke', 'start', 'pause', 'mute'];
 const keys = {}, cur = {}, prev = {}, mb = {};
 export const input = {
   onGesture: null, // set by main: unlock audio inside the user-gesture handler
-  up: 0, down: 0, left: 0, right: 0, tl: 0, tr: 0, fire: 0, mg: 0, smoke: 0, start: 0, pause: 0,
+  up: 0, down: 0, left: 0, right: 0, tl: 0, tr: 0, fire: 0, mg: 0, smoke: 0, start: 0, pause: 0, mute: 0,
   drive: 0, steer: 0, turret: 0,
   mx: 0, my: 0, mouse: false, // logical canvas coords; mouse=true once the mouse has been used
   anyKey: false,

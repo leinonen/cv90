@@ -16,7 +16,7 @@ export function updateHUD() {
   set('smoke', p ? 'SMK ' + p.smoke : '');
   set('ammo', p ? 'AP ' + p.ammo : '');
   set('obj', G.state === 'play' ? G.obj : '');
-  set('msg', G.msg); set('sub', G.sub); set('ctl', G.ctl);
+  set('msg', G.msg); set('sub', G.sub); set('ctl', G.toast || G.ctl);
   width('hp', hpfill, p ? Math.max(0, p.hp / p.maxhp * 100).toFixed(0) + '%' : '0%');
   width('heat', heatfill, p ? Math.min(100, p.mgHeat).toFixed(0) + '%' : '0%');
   const jam = p && p.jam > 0;

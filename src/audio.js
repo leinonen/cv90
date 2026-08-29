@@ -1,6 +1,7 @@
 // WebAudio synth SFX. No samples.
 let ctx = null, master = null, noiseBuf = null, mgN = 0, engine = null, engineG = null;
 let music = null; // see startMusic()
+let musicOn = localStorage.getItem('cv90_music') !== '0';
 
 function tone(freq, type, dur, vol, slideTo) {
   if (!ctx) return;
@@ -39,6 +40,12 @@ export const audio = {
   },
   // 0..1 threat level; the score follows it.
   music(intensity) { if (music) music.target = Math.max(0, Math.min(1, intensity)); },
+  musicOn() { return musicOn; },
+  toggleMusic() {
+    musicOn = !musicOn; localStorage.setItem('cv90_music', musicOn ? '1' : '0');
+    if (music) music.bus.gain.setTargetAtTime(musicOn ? 0.9 : 0, ctx.currentTime, 0.1);
+    return musicOn;
+  },
   // speed 0..1 (abs), on = engine running at all
   engine(speed, on) {
     if (!ctx) return;
@@ -80,7 +87,7 @@ const KICK = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0];
 const SNARE = [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1];
 const ARP = [0, 7, 12, 7, 15, 12, 19, 12, 0, 7, 12, 7, 15, 12, 24, 19]; // third slot replaced by chord third
 function startMusic() {
-  const bus = ctx.createGain(); bus.gain.value = 0.9; bus.connect(master);
+  const bus = ctx.createGain(); bus.gain.value = musicOn ? 0.9 : 0; bus.connect(master);
   const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 2; lp.connect(bus);
   // pad: 3 detuned pulse voices through the shared lowpass
   const pad = [];

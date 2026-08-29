@@ -37,7 +37,7 @@ function showTitle() {
   G.state = 'title'; G.player = null; G.boss = null;
   G.cam.x = 0; G.cam.y = 40;
   G.msg = 'CV90'; G.sub = 'SOMETHING CAME THROUGH THE TREES.\nIT WAS NOT THE MOOSE.\nMOUNT UP. HOLD THE FOREST.\n\nCLICK OR PRESS Z';
-  G.ctl = 'W/S  DRIVE   A/D  STEER   MOUSE  AIM\nLMB / Z  CANNON   RMB / X  MACHINE GUN   C  SMOKE';
+  G.ctl = 'W/S  DRIVE   A/D  STEER   MOUSE  AIM\nLMB / Z  CANNON   RMB / X  MACHINE GUN   C  SMOKE\nM  MUSIC ON/OFF';
 }
 function startGame() {
   G.score = 0; G.stage = 1;
@@ -70,6 +70,8 @@ function update() {
   }
   G.god = GOD;
   if (input.anyKey) audio.init();
+  if (input.pressed('mute')) { const on = audio.toggleMusic(); G.toast = 'MUSIC ' + (on ? 'ON' : 'OFF'); G.toastT = 90; }
+  if (G.toastT > 0 && --G.toastT === 0) G.toast = '';
   G.time++;
   { // threat level for the score
     let th = 0.12;

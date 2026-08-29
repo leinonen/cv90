@@ -23,7 +23,8 @@ Needs a browser with WebGL2 (any current Chrome/Firefox/Safari).
 | Cannon | Left mouse / Z / Space / gamepad A / RT |
 | Machine gun | Right mouse / X / gamepad X / RB |
 | Smoke | C / L / gamepad B / LB |
-| Start | Z / Enter |
+| Start | Z / Enter / click |
+| Music on/off | M (remembered) |
 
 The cannon is slow but kills armour; it also fells trees. The machine gun is fast, overheats,
 and is the only thing that reaches the Hind. Smoke blocks line of sight: enemies in or behind
