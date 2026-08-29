@@ -53,3 +53,7 @@ Clearing a sector loops with higher difficulty.
     src/level.js     mission objectives, ambient spawns, compass marker
     src/game.js      collisions
     src/audio.js     WebAudio SFX, engine hum, procedural tension score
+
+## License
+
+MIT — see [LICENSE](LICENSE).
