@@ -7,7 +7,7 @@ import { audio } from './audio.js';
 import { drawTrees } from './terrain.js';
 import * as E from './entities.js';
 import { updateEnemies, updateBoss, spawnBoss } from './enemies.js';
-import { updateLevel, resetLevel } from './level.js';
+import { updateLevel, resetLevel, drawObjective, nextObjective } from './level.js';
 import { collisions } from './game.js';
 import { updateHUD, setFontSize } from './hud.js';
 
@@ -45,7 +45,8 @@ function startGame() {
   E.clearBullets(G.eb, false); E.clearBullets(G.pb, false);
   G.boss = null; G.shake = 0; G.chroma = 0; G.flash = 0;
   resetLevel();
-  if (location.search.includes('boss')) { G.levelT = 200; G.levelIdx = 99; after(90, () => { spawnBoss(G.player.x, G.player.y - 300); if (location.search.includes('weak')) G.boss.hp = 3; G.sub = 'WARNING\nHEAVY ARMOUR'; after(150, () => { if (G.sub.startsWith('WARNING')) G.sub = ''; }); }); }
+  { const m = location.search.match(/obj=(\d)/); if (m) { G.timers.length = 0; G.mission = { idx: +m[1] - 1, done: true }; after(60, nextObjective); } }
+  if (location.search.includes('boss')) { G.timers.length = 0; G.mission = { idx: 3, kind: 'boss', t: 0, done: false, text: 'DESTROY THE T-90', marker: 'target' }; after(30, () => { spawnBoss(G.player.x, G.player.y - 300); if (location.search.includes('weak')) G.boss.hp = 3; }); }
   G.msg = ''; G.sub = ''; G.ctl = '';
   G.state = 'play';
   audio.start();
@@ -58,8 +59,11 @@ function update() {
   if (AUTO) {
     if (G.state === 'title' && G.time > 10) startGame();
     if (G.state === 'play' && G.player) {
-      input.drive = 1; input.steer = Math.sin(G.time * 0.01) * 0.8; input.turret = Math.sin(G.time * 0.03);
-      input.fire = 1; input.mg = G.time % 200 < 100 ? 1 : 0; if (G.time % 900 === 0) input.smoke = 1;
+      const m = G.mission, p = G.player;
+      let steer = Math.sin(G.time * 0.01) * 0.8;
+      if (m && m.x !== undefined) { const d = Math.atan2(Math.sin(Math.atan2(m.y - p.y, m.x - p.x) - p.rot), Math.cos(Math.atan2(m.y - p.y, m.x - p.x) - p.rot)); steer = Math.max(-1, Math.min(1, d * 3)); if (m.kind === 'hold' && Math.hypot(m.x - p.x, m.y - p.y) < 60) steer = 1; }
+      input.drive = 1; input.steer = steer; input.turret = Math.sin(G.time * 0.03);
+      input.fire = m && m.x !== undefined && m.kind !== 'hold' && Math.hypot(m.x - p.x, m.y - p.y) > 200 ? (G.time % 120 < 10 ? 1 : 0) : 1; input.mg = G.time % 200 < 100 ? 1 : 0; if (G.time % 900 === 0) input.smoke = 1;
     }
     if (G.time % 600 === 0 && G.state === 'play') G.levelT += 20;
   }
@@ -116,7 +120,7 @@ function drawEnemy(e) {
     R.sprite(F.inf, e.x + 1.5, e.y + 2, e.rot + Q, 1, 0, 0, 0, 0.3, 1);
     R.sprite(F.inf, e.x, e.y, e.rot + Q);
     if (e.flash) R.sprite(F.inf, e.x, e.y, e.rot + Q, 1, 1, 1, 1, 0.5, 1);
-  } else drawVehicle(d.hull, d.turret, e.x, e.y, e.rot, e.trot, e.flash);
+  } else drawVehicle(d.hull, d.turret, e.x, e.y, e.rot, d.static ? e.rot : e.trot, e.flash);
 }
 function render() {
   const t = G.time / 60;
@@ -143,6 +147,7 @@ function render() {
   drawTrees(R, cx, cy, false, p && !p.dead ? p.x : 1e9, p && !p.dead ? p.y : 1e9);
   for (const e of G.enemies) if (e.def.air) drawEnemy(e);
   R.setAdditive(true);
+  if (G.state === 'play') drawObjective(R, cx, cy, t);
   for (const k of G.pb) R.sprite(F[k.frame], k.x, k.y, k.rot, k.sx, k.r, k.g, k.b, 0.9);
   for (const k of G.eb) R.sprite(F[k.frame], k.x, k.y, k.rot, k.sx, k.r, k.g, k.b, 1);
   for (const q of G.parts) if (q.add) R.sprite(F[q.frame], q.x, q.y, q.rot, q.sx, q.r, q.g, q.b, q.fade * (1 - q.t / q.life));
@@ -168,7 +173,7 @@ function frame(now) {
   if (acc >= DT) acc = 0;
   render();
   updateHUD();
-  if (DEBUG) { fpsN++; if (now - fpsT > 500) { fps = Math.round(fpsN * 1000 / (now - fpsT)); fpsT = now; fpsN = 0; } dbg.textContent = `fps ${fps} eb ${G.eb.length} pb ${G.pb.length} parts ${G.parts.length} en ${G.enemies.length} smk ${G.smokes.length} t ${G.levelT.toFixed(1)}`; }
+  if (DEBUG) { fpsN++; if (now - fpsT > 500) { fps = Math.round(fpsN * 1000 / (now - fpsT)); fpsT = now; fpsN = 0; } dbg.textContent = `obj ${G.mission ? G.mission.kind : '-'} fps ${fps} eb ${G.eb.length} pb ${G.pb.length} parts ${G.parts.length} en ${G.enemies.length} smk ${G.smokes.length} t ${G.levelT.toFixed(1)}`; }
   requestAnimationFrame(frame);
 }
 { const m = location.search.match(/skip=(\d+)/); if (m) for (let i = 0; i < +m[1]; i++) update(); }

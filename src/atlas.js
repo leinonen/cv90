@@ -242,8 +242,34 @@ export function buildAtlas() {
     for (let i = 0; i < 3; i++) { g.save(); g.translate(13, 18); g.rotate(i * 2.1 + 0.4); rrect(-1, 0, 2, 16 + i * 3, 0.8, '#222', '#000', 0.3); g.restore(); }
   }, SS);
 
-  // ---- bullets & particles (2x, smooth) ----------------------------------
   const B = 2;
+  // ---- supply depot (objective) ---------------------------------------------
+  add('depot', 40, 40, d => {
+    // sandbag ring
+    g.save(); g.translate(20, 20);
+    for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; ellipse(Math.cos(a) * 17, Math.sin(a) * 17, 2.6, 1.7, i % 2 ? '#8a7a55' : '#a08e63', '#3a3020', 0.35); }
+    g.restore();
+    // tent
+    poly([[6, 12], [18, 8], [18, 24], [6, 26]], grad(6, 18, [[0, '#4a5a34'], [1, '#2e3a22']]), '#141a0e', 0.4);
+    line(12, 9.5, 12, 25, 'rgba(255,255,255,0.18)', 0.6);
+    // fuel drums
+    for (const [x, y, c] of [[26, 13, '#7a2a20'], [31, 15, '#7a2a20'], [28, 19, '#8a6a20'], [33, 21, '#7a2a20'], [25, 24, '#8a6a20']]) { ellipse(x, y, 2.4, 2.4, c, '#1a0a08', 0.4); ellipse(x, y, 1.2, 1.2, 'rgba(255,255,255,0.15)', null); }
+    // crates
+    rrect(10, 28, 5, 4, 0.4, '#9a7a4a', '#3a2a14', 0.35); rrect(16, 29, 5, 4, 0.4, '#9a7a4a', '#3a2a14', 0.35); rrect(13, 31.5, 5, 4, 0.4, '#8a6a3a', '#3a2a14', 0.35);
+    // radio mast
+    line(30, 30, 30, 22, '#222', 0.7); ellipse(30, 22, 1, 1, '#ddd', '#333', 0.3);
+  }, SS);
+  add('wreck_d', 40, 40, d => {
+    g.save(); g.translate(20, 20);
+    for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2; if (i % 3) ellipse(Math.cos(a) * 17, Math.sin(a) * 17, 2.6, 1.7, '#3a3428', '#1a160e', 0.35); }
+    g.restore();
+    g.fillStyle = radial(20, 20, 16, [[0, '#1a1614'], [0.7, 'rgba(30,26,22,0.8)'], [1, 'rgba(30,26,22,0)']]); g.fillRect(0, 0, 40, 40);
+    for (const [x, y] of [[26, 13], [31, 15], [28, 19]]) ellipse(x, y, 2.4, 2.4, '#2a1a14', '#000', 0.4);
+    poly([[6, 12], [15, 10], [12, 22], [6, 26]], '#22261a', '#0a0c08', 0.4);
+  }, SS);
+  add('arrow', 12, 14, () => { g.fillStyle = '#fff'; g.beginPath(); g.moveTo(6, 0); g.lineTo(12, 12); g.lineTo(6, 9); g.lineTo(0, 12); g.closePath(); g.fill(); }, B);
+
+  // ---- bullets & particles (2x, smooth) ----------------------------------
   add('orb', 12, 12, () => { g.fillStyle = radial(6, 6, 6, [[0, '#fff'], [0.3, '#fff'], [0.55, 'rgba(255,255,255,0.85)'], [0.8, 'rgba(255,255,255,0.35)'], [1, 'rgba(255,255,255,0)']]); g.fillRect(0, 0, 12, 12); }, B);
   add('ap', 4, 14, () => { g.fillStyle = 'rgba(255,255,255,0.4)'; g.beginPath(); g.ellipse(2, 7, 2, 7, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.ellipse(2, 6, 0.8, 5.5, 0, 0, Math.PI * 2); g.fill(); }, B);
   add('tracer', 3, 10, () => { g.fillStyle = radial(1.5, 3, 7, [[0, '#fff'], [0.4, 'rgba(255,255,255,0.7)'], [1, 'rgba(255,255,255,0)']]); g.beginPath(); g.ellipse(1.5, 5, 1.5, 5, 0, 0, Math.PI * 2); g.fill(); }, B);

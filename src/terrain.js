@@ -37,7 +37,7 @@ function cell(cx, cy) {
   const h = hash(cx, cy), h2 = hash(cx * 3 + 1, cy * 5 + 2), h3 = hash(cx * 7 + 3, cy * 11 + 5);
   const x = cx * CELL + 4 + h2 * (CELL - 8), y = cy * CELL + 4 + h3 * (CELL - 8);
   const d = density(x, y);
-  const thr = 0.25 + (1 - d) * 0.9; // dense woods where fbm high, glades where low
+  const thr = 0.5 + (1 - d) * 0.9; // dense woods where fbm high (~50% of cells), glades where low
   let tree = null;
   if (h > thr && !isRoad(x, y) && !isBog(x, y) && !removed.has(k) && (Math.abs(x) > 40 || Math.abs(y) > 40)) {
     const kind = h2 < 0.55 ? 'pine' : h2 < 0.8 ? 'spruce' : h2 < 0.93 ? 'birch' : 'bush';

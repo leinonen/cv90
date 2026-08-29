@@ -28,12 +28,14 @@ Needs a browser with WebGL2 (any current Chrome/Firefox/Safari).
 The cannon is slow but kills armour; it also fells trees. The machine gun is fast, overheats,
 and is the only thing that reaches the Hind. Smoke blocks line of sight: enemies in or behind
 it lose you and wander. Trees block shots and hulls. Ram infantry. Pick up **+** (repair) and
-**S** (smoke). Kill the T-90 to clear the sector and loop with higher difficulty.
+**S** (smoke). Each sector is a chain of objectives — reach the fire-base, destroy the supply depot,
+hold the crossroads for 45 s, then kill the T-90 — shown top-centre with a compass arrow.
+Clearing a sector loops with higher difficulty.
 
 ## Debug URL flags
 
 - `?debug` — fps / entity counters
-- `?auto` — autopilot (smoke test), `&god` — invulnerable, `&skip=N` — pre-run N frames, `&boss` — straight to the boss
+- `?auto` — autopilot (smoke test), `&god` — invulnerable, `&skip=N` — pre-run N frames, `&boss` — straight to the boss, `&obj=N` — start at objective N (1–4)
 
 ## Layout
 
@@ -46,6 +48,6 @@ it lose you and wander. Trees block shots and hulls. Ram infantry. Pick up **+**
     src/entities.js  bullets, particles, smoke clouds, pickups, player
     src/patterns.js  shot helpers, lead aiming, line-of-sight
     src/enemies.js   enemy types + T-90 boss
-    src/level.js     wave timeline (spawns relative to the tank)
+    src/level.js     mission objectives, ambient spawns, compass marker
     src/game.js      collisions
     src/audio.js     WebAudio SFX + engine hum

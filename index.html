@@ -32,6 +32,7 @@
   .bar i{display:block;height:100%;width:100%}
   #hpfill{background:linear-gradient(90deg,#3fbf3f,#b8e83a)}
   #heatfill{background:linear-gradient(90deg,#ffb020,#ff3030)}
+  #obj{position:absolute;left:0;right:0;top:calc(var(--fs)*1.2);text-align:center;font-size:var(--fs);color:#b8e83a;line-height:1.6}
   #bossbar{position:absolute;left:8%;right:8%;top:calc(var(--fs)*5.2);height:calc(var(--fs)*0.6);background:#200;border:2px solid #000;display:none}
   #bossfill{height:100%;background:linear-gradient(90deg,#ff3030,#ffb020);width:100%}
   #msg{position:absolute;left:0;right:0;top:28%;text-align:center;font-size:calc(var(--fs)*3.2);color:#f7d117;line-height:1.4}
@@ -48,6 +49,7 @@
       <div><span class="lbl">SCORE</span> <span id="score">0</span><br><span class="lbl">HI</span> <span id="hi">0</span></div>
       <div style="text-align:right"><span id="lives"></span> <span id="smoke"></span> <span class="lbl">ST</span> <span id="stage_n">1</span><br><span class="lbl">HP</span> <span class="bar"><i id="hpfill"></i></span> <span class="lbl">MG</span> <span class="bar"><i id="heatfill"></i></span></div>
     </div>
+    <div id="obj"></div>
     <div id="bossbar"><div id="bossfill"></div></div>
     <div id="msg"></div>
     <div id="sub"></div>

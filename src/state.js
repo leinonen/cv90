@@ -11,7 +11,7 @@ export const G = {
   player: null,
   enemies: [], eb: [], pb: [], parts: [], smokes: [], pickups: [], timers: [],
   boss: null,
-  levelT: 0, levelIdx: 0, bossPending: false, clearT: 0,
+  levelT: 0, clearT: 0, mission: null, obj: '',
   msg: '', sub: '', ctl: '',
 };
 

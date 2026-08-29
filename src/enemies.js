@@ -90,6 +90,11 @@ export const TYPES = {
   } },
 };
 
+// Static objective structure. Calls for help when attacked.
+TYPES.depot = { hull: 'depot', hp: 120, rad: 17, score: 2000, air: false, drop: 1, wreck: 'wreck_d', static: true, update(e) {
+  if (e.flash && e.t % 90 === 0) { const a = Math.random() * 6.28; spawnEnemy('inf', e.x + Math.cos(a) * 60, e.y + Math.sin(a) * 60); }
+} };
+
 export function spawnEnemy(type, x, y, o = {}) {
   const d = TYPES[type];
   const hp = Math.ceil(d.hp * hpMul());
@@ -123,7 +128,7 @@ export function updateEnemies() {
     e.t++; e.def.update(e);
     if (e.flash) e.flash--;
     if (e.hp <= 0) { killEnemy(i); continue; }
-    if (p && e.t > 300 && Math.hypot(e.x - p.x, e.y - p.y) > 800) { G.enemies[i] = G.enemies[G.enemies.length - 1]; G.enemies.pop(); }
+    if (p && !e.def.static && e.t > 300 && Math.hypot(e.x - p.x, e.y - p.y) > 800) { G.enemies[i] = G.enemies[G.enemies.length - 1]; G.enemies.pop(); }
   }
 }
 
