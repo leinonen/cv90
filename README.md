@@ -4,7 +4,7 @@ Top-down tank action. Drive a Strf 9040 (CV90) through an endless Swedish pine f
 and hold off an armoured column: RPG infantry, BMP-2s, T-72s, Mi-24 Hinds and a T-90
 command tank. 40 mm cannon, coaxial machine gun and smoke launchers. Retro pixel look,
 WebGL2 post-processing (bloom, CRT scanlines, barrel, chromatic aberration, screen shake),
-procedural forest, synthesized audio. Zero dependencies, no build step.
+procedural forest, synthesized audio and a procedural score that tightens with the threat level. Zero dependencies, no build step.
 
 ## Run
 
@@ -51,4 +51,4 @@ Clearing a sector loops with higher difficulty.
     src/enemies.js   enemy types + T-90 boss
     src/level.js     mission objectives, ambient spawns, compass marker
     src/game.js      collisions
-    src/audio.js     WebAudio SFX + engine hum
+    src/audio.js     WebAudio SFX, engine hum, procedural tension score

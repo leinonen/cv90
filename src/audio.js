@@ -1,5 +1,6 @@
 // WebAudio synth SFX. No samples.
 let ctx = null, master = null, noiseBuf = null, mgN = 0, engine = null, engineG = null;
+let music = null; // see startMusic()
 
 function tone(freq, type, dur, vol, slideTo) {
   if (!ctx) return;
@@ -33,7 +34,10 @@ export const audio = {
     const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 180;
     engineG = ctx.createGain(); engineG.gain.value = 0;
     engine.connect(f); f.connect(engineG); engineG.connect(master); engine.start();
+    startMusic();
   },
+  // 0..1 threat level; the score follows it.
+  music(intensity) { if (music) music.target = Math.max(0, Math.min(1, intensity)); },
   // speed 0..1 (abs), on = engine running at all
   engine(speed, on) {
     if (!ctx) return;
@@ -58,3 +62,63 @@ export const audio = {
   start() { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => tone(f, 'square', 0.15, 0.08), i * 90)); },
   clear() { [523, 659, 784, 1047, 1319].forEach((f, i) => setTimeout(() => tone(f, 'square', 0.25, 0.1), i * 120)); },
 };
+
+// ---------------- procedural score ----------------
+// Drone + slow minor pads + a pulse. Tempo, layers and dissonance scale with `music.target`.
+const ROOTS = [36.71, 29.14, 43.65, 27.50]; // D1, Bb0, F1, A0 — a slow Dm / Bb / F / A cycle
+function startMusic() {
+  const bus = ctx.createGain(); bus.gain.value = 0.55; bus.connect(master);
+  // drone: two detuned saws through a slow-wobbling lowpass
+  const dg = ctx.createGain(); dg.gain.value = 0.05;
+  const df = ctx.createBiquadFilter(); df.type = 'lowpass'; df.frequency.value = 160; df.Q.value = 4;
+  const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07; const lg = ctx.createGain(); lg.gain.value = 60;
+  lfo.connect(lg); lg.connect(df.frequency); lfo.start();
+  for (const det of [0, 1.004]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 36.71 * det; o.connect(df); o.start(); }
+  df.connect(dg); dg.connect(bus);
+  // pad voices (3) with slow attack/release
+  const pad = [];
+  for (let i = 0; i < 3; i++) { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = i ? 'triangle' : 'sine'; g.gain.value = 0; o.connect(g); g.connect(bus); o.start(); pad.push({ o, g }); }
+  // tension voice: high, slowly beating pair that fades in with intensity
+  const tg = ctx.createGain(); tg.gain.value = 0;
+  for (const f of [587.33, 590.5]) { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.connect(tg); o.start(); }
+  tg.connect(bus);
+  music = { target: 0.15, level: 0.15, next: ctx.currentTime + 0.5, beat: 0, chord: 0, bus, dg, df, pad, tg };
+  setInterval(tick, 80);
+}
+function kick(t, vol, f0 = 90, f1 = 32, dur = 0.35) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.6);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(music.bus); o.start(t); o.stop(t + dur + 0.02);
+}
+function tickNoise(t, vol, cutoff) {
+  const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+  s.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = cutoff; f.Q.value = 6;
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  s.connect(f); f.connect(g); g.connect(music.bus); s.start(t); s.stop(t + 0.08);
+}
+function tick() {
+  const m = music, now = ctx.currentTime;
+  m.level += (m.target - m.level) * 0.04;
+  const L = m.level;
+  // continuous layers follow the level
+  m.df.frequency.setTargetAtTime(140 + L * 260, now, 0.5);
+  m.dg.gain.setTargetAtTime(0.045 + L * 0.03, now, 0.5);
+  m.tg.gain.setTargetAtTime(Math.max(0, L - 0.45) * 0.05, now, 1.0);
+  while (m.next < now + 0.25) {
+    const t = m.next, interval = 1.25 - L * 0.78; // 48 → 128 bpm
+    const b = m.beat;
+    if (b % 8 === 0) { // chord change: pad slides to new root voicing (root, fifth, minor third an octave up)
+      m.chord = (m.chord + 1) % ROOTS.length;
+      const r = ROOTS[m.chord] * 2;
+      const freqs = [r, r * 1.5, r * 2.4 * (m.chord === 3 ? 1.05 : 1)]; // A chord gets a major third: unresolved
+      m.pad.forEach((v, i) => { v.o.frequency.setTargetAtTime(freqs[i], t, 0.8); v.g.gain.setTargetAtTime(0.028 - i * 0.006 + L * 0.012, t, 1.5); });
+    }
+    kick(t, 0.28 + L * 0.2);                                   // heartbeat on every beat
+    if (L > 0.3 && b % 2 === 1) kick(t + interval * 0.5, 0.16 * L, 70, 40, 0.2); // syncopated second thump
+    if (L > 0.45) tickNoise(t + interval * 0.5, 0.06 + L * 0.08, 3000); // off-beat tick
+    if (L > 0.7 && b % 4 === 2) kick(t, 0.3, 160, 60, 0.3);   // tom accent
+    if (L > 0.85 && b % 8 === 7) tickNoise(t + interval * 0.75, 0.2, 1200); // pre-bar snap
+    m.next += interval; m.beat++;
+  }
+}

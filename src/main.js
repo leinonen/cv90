@@ -57,7 +57,7 @@ let lastStage = 0;
 function update() {
   input.update();
   if (AUTO) {
-    if (G.state === 'title' && G.time > 10) startGame();
+    if (G.state === 'title' && G.time > 10) { input.anyKey = true; startGame(); }
     if (G.state === 'play' && G.player) {
       const m = G.mission, p = G.player;
       let steer = Math.sin(G.time * 0.01) * 0.8;
@@ -70,6 +70,18 @@ function update() {
   G.god = GOD;
   if (input.anyKey) audio.init();
   G.time++;
+  { // threat level for the score
+    let th = 0.12;
+    if (G.state === 'play' && G.player) {
+      const p = G.player, m = G.mission;
+      let near = 0; for (const e of G.enemies) if (Math.hypot(e.x - p.x, e.y - p.y) < 420) near += e.type === 'inf' ? 0.5 : 1;
+      th = 0.25 + Math.min(0.45, near * 0.08);
+      if (m && m.kind === 'hold' && !m.done) th = Math.max(th, 0.55 + 0.25 * (m.hold / m.need));
+      if (G.boss && !G.boss.dying) th = 0.9 + 0.1 * (1 - G.boss.hp / G.boss.maxhp);
+      if (p.hp < p.maxhp * 0.3) th = Math.min(1, th + 0.15);
+    } else if (G.state === 'gameover') th = 0.3;
+    audio.music(th);
+  }
   if (G.state === 'title') {
     if (input.pressed('fire') || input.pressed('start')) startGame();
     E.updateParticles();
