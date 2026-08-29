@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CV90</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="author" content="Peter Leinonen">
+<meta name="description" content="A WebGL top-down tank game. Drive a CV90 through the Swedish forest. Cannon, coax MG, smoke. They came through the trees. Send them back.">
+<meta name="keywords" content="cv90, tank game, webgl, forest, retro game, browser game, strf 90">
+<meta name="theme-color" content="#05070c">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CV90">
+<meta property="og:description" content="A WebGL top-down tank game. Drive a CV90 through the Swedish forest. Cannon, coax MG, smoke.">
+<meta property="og:url" content="https://cv90.leinonen.ninja/">
+<meta property="og:image" content="https://cv90.leinonen.ninja/favicon.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CV90">
+<meta name="twitter:description" content="A WebGL top-down tank game. Drive a CV90 through the Swedish forest. Cannon, coax MG, smoke.">
+<meta name="twitter:image" content="https://cv90.leinonen.ninja/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;height:100%;background:#05070c;overflow:hidden;font-family:'Press Start 2P',monospace;color:#e8e6d8}
+  #wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center}
+  #stage{position:relative}
+  canvas{display:block;image-rendering:pixelated;cursor:none}
+  #hud{position:absolute;inset:0;pointer-events:none;text-shadow:2px 2px 0 #000}
+  #hud .top{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;padding:calc(var(--fs)*1.2) calc(var(--fs)*1.4);font-size:var(--fs);line-height:1.6}
+  #hud .lbl{color:#f7d117}
+  .bar{display:inline-block;vertical-align:middle;width:calc(var(--fs)*10);height:calc(var(--fs)*0.7);background:#200;border:2px solid #000}
+  .bar i{display:block;height:100%;width:100%}
+  #hpfill{background:linear-gradient(90deg,#3fbf3f,#b8e83a)}
+  #heatfill{background:linear-gradient(90deg,#ffb020,#ff3030)}
+  #bossbar{position:absolute;left:8%;right:8%;top:calc(var(--fs)*5.2);height:calc(var(--fs)*0.6);background:#200;border:2px solid #000;display:none}
+  #bossfill{height:100%;background:linear-gradient(90deg,#ff3030,#ffb020);width:100%}
+  #msg{position:absolute;left:0;right:0;top:28%;text-align:center;font-size:calc(var(--fs)*3.2);color:#f7d117;line-height:1.4}
+  #sub{position:absolute;left:0;right:0;padding:0 calc(var(--fs)*1.5);top:50%;text-align:center;font-size:var(--fs);color:#cfe7ff;line-height:1.8;white-space:pre-line}
+  #ctl{position:absolute;left:0;right:0;padding:0 calc(var(--fs)*1.5);bottom:4%;text-align:center;font-size:calc(var(--fs)*0.75);color:#8ea9c4;line-height:1.8;white-space:pre-line}
+  #dbg{position:fixed;left:4px;bottom:4px;font-size:10px;color:#0f0;font-family:monospace;display:none}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <canvas id="c"></canvas>
+  <div id="hud">
+    <div class="top">
+      <div><span class="lbl">SCORE</span> <span id="score">0</span><br><span class="lbl">HI</span> <span id="hi">0</span></div>
+      <div style="text-align:right"><span id="lives"></span> <span id="smoke"></span> <span class="lbl">ST</span> <span id="stage_n">1</span><br><span class="lbl">HP</span> <span class="bar"><i id="hpfill"></i></span> <span class="lbl">MG</span> <span class="bar"><i id="heatfill"></i></span></div>
+    </div>
+    <div id="bossbar"><div id="bossfill"></div></div>
+    <div id="msg"></div>
+    <div id="sub"></div>
+    <div id="ctl"></div>
+  </div>
+</div></div>
+<div id="dbg"></div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
