@@ -172,7 +172,13 @@ export function barrelTip(p, len = 26) { return [p.x + Math.cos(p.trot) * len, p
 function fireCannon(p) {
   const [bx, by] = barrelTip(p);
   const v = 9;
-  spawnBullet(G.pb, bx, by, Math.cos(p.trot) * v, Math.sin(p.trot) * v, { frame: 'ap', r: 1, g: 0.95, b: 0.7, rad: 3, dmg: 15, type: 'ap', life: 90, fn: b => { if (b.t === b.life) detonate(b.x, b.y, 0.7); } });
+  // With the mouse the shell is fused to burst at the cursor; keys give max range.
+  let life = 90;
+  if (input.mouse) {
+    const wx = input.mx + G.cam.x - W / 2, wy = input.my + G.cam.y - H / 2;
+    life = Math.max(3, Math.min(90, Math.round((Math.hypot(wx - bx, wy - by)) / v)));
+  }
+  spawnBullet(G.pb, bx, by, Math.cos(p.trot) * v, Math.sin(p.trot) * v, { frame: 'ap', r: 1, g: 0.95, b: 0.7, rad: 3, dmg: 15, type: 'ap', life, fn: b => { if (b.t === b.life) detonate(b.x, b.y, 0.7); } });
   muzzle(bx, by, p.trot, 1.4);
   p.v -= Math.cos(p.trot - p.rot) * 0.7;
   G.shake = Math.max(G.shake, 5); p.cannonT = 38;
