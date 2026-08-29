@@ -28,7 +28,8 @@ Needs a browser with WebGL2 (any current Chrome/Firefox/Safari).
 The cannon is slow but kills armour; it also fells trees. The machine gun is fast, overheats,
 and is the only thing that reaches the Hind. Smoke blocks line of sight: enemies in or behind
 it lose you and wander. Trees block shots and hulls. Ram infantry. Pick up **+** (repair) and
-**S** (smoke). Each sector is a chain of objectives — reach the fire-base, destroy the supply depot,
+**S** (smoke) — every objective drops one, the fire-base holds a cache, and securing a
+sector fully repairs and resupplies you. Each sector is a chain of objectives — reach the fire-base, destroy the supply depot,
 hold the crossroads for 45 s, then kill the T-90 — shown top-centre with a compass arrow.
 Clearing a sector loops with higher difficulty.
 
